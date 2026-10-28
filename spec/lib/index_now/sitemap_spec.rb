@@ -73,6 +73,57 @@ RSpec.describe IndexNow::Sitemap do
     expect { described_class.entries }.to raise_error(IndexNow::SitemapError, /301/)
   end
 
+  it "fails on a body that is not a urlset" do
+    SitemapsController.body = "<!doctype html><html><body>Hello</body></html>"
+
+    expect { described_class.entries }.to raise_error(IndexNow::SitemapError, /urlset/)
+  end
+
+  it "fails on an empty body" do
+    expect { described_class.entries }.to raise_error(IndexNow::SitemapError)
+  end
+
+  it "fails on truncated xml rather than reading what is left" do
+    SitemapsController.body = urlset("<url><loc>https://exa")
+
+    expect { described_class.entries }.to raise_error(IndexNow::SitemapError)
+  end
+
+  it "lists a url once even when the sitemap repeats it" do
+    SitemapsController.body = urlset(*Array.new(2) { "<url><loc>https://example.org/</loc></url>" })
+
+    expect(described_class.entries.map(&:url)).to eq [ "https://example.org/" ]
+  end
+
+  it "keeps no more precision than a database column holds" do
+    SitemapsController.body = urlset("<url><loc>https://example.org/</loc><lastmod>2026-10-28T11:22:45.123456789Z</lastmod></url>")
+
+    expect(described_class.entries.sole.lastmod).to eq Time.utc(2026, 10, 28, 11, 22, 45, 123456)
+  end
+
+  it "reads a minute-precision lastmod, as the sitemap protocol allows" do
+    SitemapsController.body = urlset("<url><loc>https://example.org/</loc><lastmod>2026-10-28T11:22+02:00</lastmod></url>")
+
+    expect(described_class.entries.sole.lastmod).to eq Time.utc(2026, 10, 28, 9, 22)
+  end
+
+  it "leaves the caller's request state alone" do
+    SitemapsController.body = urlset
+    Current.tenant = "acme"
+
+    Rails.application.executor.wrap { described_class.entries }
+
+    expect(Current.tenant).to eq "acme"
+  ensure
+    Current.reset
+  end
+
+  it "names the url and the host check in a 403" do
+    SitemapsController.answer_status = 403
+
+    expect { described_class.entries }.to raise_error(IndexNow::SitemapError, %r{https://example.org/sitemap.xml.*config.hosts})
+  end
+
   it "fails on a sitemap index" do
     SitemapsController.body = <<~XML
       <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

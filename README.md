@@ -60,7 +60,8 @@ announced once and never again, so give every page you want re-announced a
 IndexNow.announce_changes # => #<data IndexNow::Result urls=[…], error=nil>
 ```
 
-It never raises: a failure is logged, reported through `Rails.error`, and
+Call it after the data is committed: the sitemap is read on a separate thread
+and connection. It never raises: a failure is logged, reported through `Rails.error`, and
 returned as `result.error`. Nothing is recorded for a URL until the POST that
 carried it succeeded, so the next call retries it.
 
@@ -85,14 +86,14 @@ end
 
 ```sh
 bin/rails index_now:pending       # what the next announce would send
-bin/rails index_now:announce      # send it; exits 1 on failure
+bin/rails index_now:announce      # send it; exits 1 on failure, says so when disabled
 bin/rails index_now:announce_all  # send every sitemap URL again
 ```
 
 ## Rotating the key
 
-Run the generator again (it writes a new key file and initializer), delete the
-old key file, deploy, check `https://<host>/<key>.txt` answers 200, then run
+Rename `public/<old key>.txt` to the new key, put the same key in its body and in
+`config.key`, deploy, check `https://<host>/<key>.txt` answers 200, then run
 `index_now:announce_all`.
 
 ## License

@@ -27,23 +27,29 @@ module IndexNow
 
     private
       # Never raises: a failed announcement must not fail the deploy or job that asked for it.
-      def announce
-        entries = yield
+      def announce(&entries)
+        return dry_run(&entries) unless config.enabled
+
+        entries = entries.call
         urls = entries.map(&:url)
-
-        unless config.enabled
-          Rails.logger.info("IndexNow disabled; would announce #{urls.join(", ")}") if urls.any?
-          return Result.new(urls: [], error: nil)
-        end
-
         Client.submit!(urls)
         Announcement.record!(entries)
         Rails.logger.info("IndexNow announced #{urls.join(", ")}") if urls.any?
-        Result.new(urls: urls, error: nil)
+        Result.new(urls: urls)
       rescue StandardError => error
         Rails.logger.error("IndexNow failed: #{error.class}: #{error.message}")
         Rails.error.report(error, handled: true, source: "index_now")
-        Result.new(urls: [], error: error)
+        Result.new(error: error)
+      end
+
+      # Staging and development often cannot read their own sitemap (basic auth, config.hosts); that is not an error there.
+      def dry_run
+        urls = yield.map(&:url)
+        Rails.logger.info("IndexNow disabled; would announce #{urls.join(", ")}") if urls.any?
+        Result.new(disabled: true)
+      rescue StandardError => error
+        Rails.logger.info("IndexNow disabled; could not read the sitemap: #{error.message}")
+        Result.new(disabled: true)
       end
   end
 end

@@ -70,6 +70,18 @@ RSpec.describe IndexNow do
       expect(WebMock).not_to have_requested(:post, endpoint)
     end
 
+    it "reports nothing when disabled and the sitemap cannot be read" do
+      IndexNow.config.enabled = false
+      SitemapsController.answer_status = 401
+      allow(Rails.error).to receive(:report)
+
+      result = IndexNow.announce_changes
+
+      expect(result).to be_disabled
+      expect(result).to be_ok
+      expect(Rails.error).not_to have_received(:report)
+    end
+
     it "sends and records nothing when disabled, and says what it would have sent" do
       IndexNow.config.enabled = nil
       sitemap([ "https://example.org/", "2026-09-15" ])
@@ -78,6 +90,7 @@ RSpec.describe IndexNow do
       result = IndexNow.announce_changes
 
       expect(result.urls).to be_empty
+      expect(result).to be_disabled
       expect(Rails.logger).to have_received(:info).with(%r{disabled.*https://example.org/})
       expect(IndexNow::Announcement.count).to eq 0
     end

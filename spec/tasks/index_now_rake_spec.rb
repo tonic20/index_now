@@ -37,6 +37,12 @@ RSpec.describe "index_now rake tasks" do
       .and output(/403/).to_stderr
   end
 
+  it "announce says when it is disabled rather than up to date" do
+    IndexNow.config.enabled = false
+
+    expect { run("index_now:announce") }.to output(/disabled/).to_stdout
+  end
+
   it "pending lists what would go without sending it" do
     expect { run("index_now:pending") }.to output(%r{https://example.org/}).to_stdout
 

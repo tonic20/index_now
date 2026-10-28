@@ -8,35 +8,48 @@ module IndexNow
 
     class << self
       def entries
-        document = Nokogiri::XML(fetch).remove_namespaces!
-        raise SitemapError, "#{path} is a sitemapindex; only a urlset is supported" if document.root&.name == "sitemapindex"
-
-        document.xpath("/urlset/url").map do |url|
-          Entry.new(url: url.at("loc").text.strip, lastmod: url.at("lastmod")&.text&.then { |text| Time.iso8601(normalize(text)).utc })
-        end
+        parse(fetch).xpath("/urlset/url").map do |url|
+          Entry.new(url: url.at("loc").text.strip, lastmod: url.at("lastmod")&.text&.then { |text| lastmod(text) })
+        end.uniq(&:url)
       end
 
       private
-        def path = IndexNow.config.sitemap_path
+        def url = "https://#{IndexNow.config.host}#{IndexNow.config.sitemap_path}"
 
-        # In-process, so it works whatever the network path back to the app is.
-        def fetch
-          status, _headers, body = Rails.application.call(env)
+        # Own thread: Rails.application.call runs the executor, which would reset the caller's Current and query cache.
+        def fetch = Thread.new { request }.value
+
+        def request
+          status, _headers, body = Rails.application.call(Rack::MockRequest.env_for(url, "HTTP_HOST" => IndexNow.config.host))
           content = +""
           body.each { |chunk| content << chunk }
-          raise SitemapError, "#{status} from #{path}" unless status == 200
+          raise SitemapError, failure_message(status) unless status == 200
 
           content
         ensure
           body.close if body.respond_to?(:close)
         end
 
-        def env
-          host = IndexNow.config.host
-          Rack::MockRequest.env_for("https://#{host}#{path}", "HTTP_HOST" => host)
+        def failure_message(status)
+          hint = " (is #{IndexNow.config.host} in config.hosts?)" if status == 403
+          "#{status} from #{url}#{hint}"
         end
 
-        def normalize(lastmod) = lastmod.strip.match?(/\A\d{4}-\d{2}-\d{2}\z/) ? "#{lastmod.strip}T00:00:00Z" : lastmod.strip
+        def parse(xml)
+          document = Nokogiri::XML(xml, &:strict).remove_namespaces!
+          root = document.root&.name
+          raise SitemapError, "#{url} is a #{root || "empty document"}, not a urlset" unless root == "urlset"
+
+          document
+        rescue Nokogiri::XML::SyntaxError => error
+          raise SitemapError, "#{url} is not an XML urlset: #{error.message}"
+        end
+
+        def lastmod(text)
+          text = text.strip
+          text = "#{text}T00:00:00Z" if text.match?(/\A\d{4}-\d{2}-\d{2}\z/)
+          Time.iso8601(text.sub(/T(\d{2}:\d{2})(?=Z|[+-])/, 'T\1:00')).utc.floor(6)
+        end
     end
   end
 end

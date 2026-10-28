@@ -2,7 +2,9 @@ namespace :index_now do
   report = lambda do |result|
     abort "IndexNow failed: #{result.error.message}" unless result.ok?
 
-    if result.urls.empty?
+    if result.disabled?
+      puts "IndexNow is disabled in #{Rails.env}; nothing sent"
+    elsif result.urls.empty?
       puts "nothing to announce"
     else
       puts "announced #{result.urls.size} url#{"s" unless result.urls.one?}"
