@@ -8,6 +8,7 @@ end
 require "index_now/configuration"
 require "index_now/engine"
 require "index_now/sitemap"
+require "index_now/client"
 
 module IndexNow
   class << self
