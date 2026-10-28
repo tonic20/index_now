@@ -1,0 +1,5 @@
+IndexNow.configure do |config|
+  config.key = "<%= key %>"
+  # config.host = "example.com"
+  # config.sitemap_path = "/sitemap.xml"
+end
