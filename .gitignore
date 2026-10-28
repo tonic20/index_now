@@ -1,0 +1,9 @@
+*.gem
+.bundle/
+Gemfile.lock
+pkg/
+spec/dummy/log/
+spec/dummy/tmp/
+spec/dummy/db/*.sqlite3*
+spec/dummy/public/
+spec/dummy/config/initializers/index_now.rb
