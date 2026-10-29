@@ -99,3 +99,7 @@ Rename `public/<old key>.txt` to the new key, put the same key in its body and i
 ## License
 
 MIT
+
+## Author
+
+Built by [Anton Kopylov](https://www.kopylov.net).
