@@ -10,14 +10,13 @@ Gem::Specification.new do |spec|
   spec.homepage    = "https://github.com/tonic20/index_now"
   spec.license     = "MIT"
 
-  spec.metadata["homepage_uri"]    = spec.homepage
   spec.metadata["source_code_uri"] = spec.homepage
   spec.metadata["changelog_uri"]   = "#{spec.homepage}/blob/main/CHANGELOG.md"
 
   spec.required_ruby_version = ">= 3.3"
 
   spec.files = Dir.chdir(File.expand_path(__dir__)) do
-    Dir["{app,db,lib}/**/*", "README.md", "LICENSE.txt", "CHANGELOG.md"]
+    Dir["{app,lib}/**/*", "README.md", "LICENSE.txt", "CHANGELOG.md"]
   end
 
   spec.add_dependency "rails", "~> 8.0"

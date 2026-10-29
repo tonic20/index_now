@@ -3,9 +3,15 @@ ENV["RAILS_ENV"] = "test"
 require_relative "dummy/config/environment"
 require "rspec/rails"
 require "webmock/rspec"
+require "generators/index_now/install/install_generator"
 
 ActiveRecord::Migration.verbose = false
-ActiveRecord::MigrationContext.new(File.expand_path("../db/migrate", __dir__)).migrate
+unless ActiveRecord::Base.connection.table_exists?(:index_now_announcements)
+  Dir.mktmpdir do |root|
+    IndexNow::Generators::InstallGenerator.start([ "--quiet" ], destination_root: root)
+    ActiveRecord::MigrationContext.new(File.join(root, "db/migrate")).migrate
+  end
+end
 
 RSpec.configure do |config|
   config.use_transactional_fixtures = true

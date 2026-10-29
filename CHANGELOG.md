@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- The migration ships only as the install generator's template, so
+  `index_now:install:migrations` can no longer add a second copy.
+
 ## [0.1.0] — 2026-10-28
 
 - First release: announces sitemap URLs whose `lastmod` moved to IndexNow,
