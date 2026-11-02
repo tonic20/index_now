@@ -75,7 +75,7 @@ module IndexNow
         raise Error, "no key file in #{public_dir}/: run `index_now init`, or pass --key" if files.empty?
         raise Error, "#{files.join(" and ")} are all key files: pass --key" if files.size > 1
 
-        File.basename(files.sole, ".txt")
+        File.basename(files.first, ".txt")
       end
 
       # A key file is <key>.txt holding exactly that key; other text files (robots.txt, llms.txt) are not.

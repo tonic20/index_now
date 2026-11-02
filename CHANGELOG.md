@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.1] — 2026-11-02
+
+- `index_now announce` no longer needs ActiveSupport to find the key file;
+  0.2.0 failed with ``undefined method `sole'`` outside Rails.
+
 ## [0.2.0] — 2026-11-02
 
 - Static sites: an `index_now` command (`init`, `pending`, `announce`,

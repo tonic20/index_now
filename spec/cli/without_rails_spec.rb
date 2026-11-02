@@ -24,4 +24,17 @@ RSpec.describe "index_now without Rails" do
       expect(out).to eq "https://example.org/\n"
     end
   end
+
+  it "finds the key file and announces, without ActiveSupport" do
+    Dir.mktmpdir do |dir|
+      Dir.mkdir(File.join(dir, "public"))
+      File.write(File.join(dir, "public/sitemap.xml"), "<urlset/>")
+      File.write(File.join(dir, "public/0123456789abcdef.txt"), "0123456789abcdef")
+
+      out, err, status = ruby("#{root}/exe/index_now", "announce", chdir: dir)
+
+      expect(status).to be_success, err
+      expect(out).to eq "nothing to announce\n"
+    end
+  end
 end
