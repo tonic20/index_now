@@ -133,4 +133,20 @@ RSpec.describe IndexNow::Sitemap do
 
     expect { described_class.entries }.to raise_error(IndexNow::SitemapError, /sitemapindex/)
   end
+
+  describe ".parse" do
+    it "reads entries from xml it is handed, without the app" do
+      xml = urlset("<url><loc>https://example.org/</loc><lastmod>2026-09-15</lastmod></url>")
+
+      expect(described_class.parse(xml, from: "public/sitemap.xml")).to eq [
+        IndexNow::Sitemap::Entry.new(url: "https://example.org/", lastmod: Time.utc(2026, 9, 15))
+      ]
+      expect(SitemapsController.last_request).to be_nil
+    end
+
+    it "names where the xml came from when it is not a urlset" do
+      expect { described_class.parse("<html/>", from: "public/sitemap.xml") }
+        .to raise_error(IndexNow::SitemapError, %r{public/sitemap.xml is a html})
+    end
+  end
 end

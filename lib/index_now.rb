@@ -6,10 +6,12 @@ module IndexNow
 end
 
 require "index_now/configuration"
-require "index_now/engine"
+require "index_now/key"
+require "index_now/engine" if defined?(Rails::Engine)
 require "index_now/result"
 require "index_now/sitemap"
 require "index_now/client"
+require "index_now/file_store"
 
 module IndexNow
   class << self
@@ -32,7 +34,7 @@ module IndexNow
 
         entries = entries.call
         urls = entries.map(&:url)
-        Client.submit!(urls)
+        Client.submit!(urls, key: config.key)
         Announcement.record!(entries)
         Rails.logger.info("IndexNow announced #{urls.join(", ")}") if urls.any?
         Result.new(urls: urls)

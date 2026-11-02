@@ -1,9 +1,9 @@
 # index_now
 
-Tells search engines which pages of a Rails app changed, through
+Tells search engines which pages of a Rails app or a static site changed, through
 [IndexNow](https://www.indexnow.org), so they recrawl them without waiting.
 
-It reads the app's own sitemap, announces every URL whose `<lastmod>` moved
+It reads the site's own sitemap, announces every URL whose `<lastmod>` moved
 since it last announced that URL, and records what it sent. Running it when
 nothing changed sends nothing, so it is safe to call as often as you like.
 
@@ -11,7 +11,11 @@ nothing changed sends nothing, so it is safe to call as often as you like.
 also backs ChatGPT search and Copilot), Yandex, Seznam, Naver and Yep.
 **Google is not an IndexNow participant**; nothing here affects Google.
 
-## Install
+A Rails app gets an engine that records announcements in its database; a
+static site gets an `index_now` command that records them in a JSON file
+([Static sites](#static-sites)). Both follow [the rule](#the-rule).
+
+## Install in a Rails app
 
 ```ruby
 gem "index_now"
@@ -90,11 +94,44 @@ bin/rails index_now:announce      # send it; exits 1 on failure, says so when di
 bin/rails index_now:announce_all  # send every sitemap URL again
 ```
 
+## Static sites
+
+The gem needs no Rails for this; Rails loads only when the app already has it.
+
+```sh
+gem install index_now
+index_now init       # writes public/<key>.txt; commit it and deploy it with the site
+index_now pending    # what the next announce would send
+index_now announce   # send it; exits 1 on failure
+```
+
+`announce` reads the built `public/sitemap.xml` and keeps what it sent in
+`.index_now.json`, one `url: lastmod` pair per URL. Commit that file next to
+the site, so the next run, from any machine, sends only what changed since.
+
+Run it at the end of the deploy, once the new pages are live: an engine that
+recrawls a page before the upload, or before a CDN invalidation, reads the old
+one.
+
+```sh
+aws s3 sync public/ "s3://$BUCKET" --delete
+aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION" --paths "/*"
+index_now announce || echo "IndexNow failed; the next deploy will retry"
+```
+
+| Option | Default |
+| --- | --- |
+| `--public DIR` | `public` |
+| `--sitemap PATH` | `<public>/sitemap.xml` |
+| `--state PATH` | `.index_now.json` |
+| `--key KEY` | the `<key>.txt` in `<public>` whose body is its name |
+| `--all` | `announce` sends every URL, not just the changed ones |
+
 ## Rotating the key
 
 Rename `public/<old key>.txt` to the new key, put the same key in its body and in
 `config.key`, deploy, check `https://<host>/<key>.txt` answers 200, then run
-`index_now:announce_all`.
+`index_now:announce_all` (`index_now announce --all` on a static site).
 
 ## License
 

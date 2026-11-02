@@ -1,0 +1,4 @@
+#!/usr/bin/env ruby
+require "index_now/cli"
+
+exit IndexNow::CLI.start(ARGV)

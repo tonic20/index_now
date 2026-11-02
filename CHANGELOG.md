@@ -1,7 +1,12 @@
 # Changelog
 
-## Unreleased
+## [0.2.0] — 2026-11-02
 
+- Static sites: an `index_now` command (`init`, `pending`, `announce`,
+  `announce --all`) reads the built sitemap and records what it sent in
+  `.index_now.json`, with the same rule as the Rails engine.
+- Rails is no longer a dependency; the engine loads only when Rails is present.
+- `IndexNow::Client.submit!` takes the key as `key:`.
 - The migration ships only as the install generator's template, so
   `index_now:install:migrations` can no longer add a second copy.
 

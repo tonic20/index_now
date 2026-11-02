@@ -4,13 +4,7 @@ module IndexNow
 
     def self.due(entries)
       announced = where(url: entries.map(&:url)).pluck(:url, :lastmod).to_h
-
-      entries.select do |entry|
-        next true unless announced.key?(entry.url)
-
-        previous = announced[entry.url]
-        entry.lastmod && (previous.nil? || entry.lastmod > previous)
-      end
+      entries.select { |entry| entry.due?(announced) }
     end
 
     def self.record!(entries)

@@ -1,6 +1,5 @@
 require "rails/generators"
 require "rails/generators/active_record"
-require "securerandom"
 
 module IndexNow
   module Generators
@@ -26,8 +25,8 @@ module IndexNow
 
       private
         def key
-          @key ||= (options[:key] || SecureRandom.hex(16)).tap do |key|
-            raise ArgumentError, "an IndexNow key is 8 to 128 letters, digits or dashes" unless key.match?(/\A[a-zA-Z0-9-]{8,128}\z/)
+          @key ||= (options[:key] || IndexNow::Key.generate).tap do |key|
+            raise ArgumentError, "an IndexNow key is 8 to 128 letters, digits or dashes" unless IndexNow::Key.valid?(key)
           end
         end
     end

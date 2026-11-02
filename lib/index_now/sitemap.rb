@@ -4,11 +4,21 @@ module IndexNow
   class SitemapError < Error; end
 
   module Sitemap
-    Entry = Data.define(:url, :lastmod)
+    Entry = Data.define(:url, :lastmod) do
+      # announced: { url => lastmod last announced for it }
+      def due?(announced)
+        return true unless announced.key?(url)
+
+        previous = announced[url]
+        lastmod && (previous.nil? || lastmod > previous)
+      end
+    end
 
     class << self
-      def entries
-        parse(fetch).xpath("/urlset/url").map do |url|
+      def entries = parse(fetch, from: url)
+
+      def parse(xml, from:)
+        document(xml, from).xpath("/urlset/url").map do |url|
           Entry.new(url: url.at("loc").text.strip, lastmod: url.at("lastmod")&.text&.then { |text| lastmod(text) })
         end.uniq(&:url)
       end
@@ -35,14 +45,14 @@ module IndexNow
           "#{status} from #{url}#{hint}"
         end
 
-        def parse(xml)
+        def document(xml, from)
           document = Nokogiri::XML(xml, &:strict).remove_namespaces!
           root = document.root&.name
-          raise SitemapError, "#{url} is a #{root || "empty document"}, not a urlset" unless root == "urlset"
+          raise SitemapError, "#{from} is a #{root || "empty document"}, not a urlset" unless root == "urlset"
 
           document
         rescue Nokogiri::XML::SyntaxError => error
-          raise SitemapError, "#{url} is not an XML urlset: #{error.message}"
+          raise SitemapError, "#{from} is not an XML urlset: #{error.message}"
         end
 
         def lastmod(text)
