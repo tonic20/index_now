@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.2] — 2026-11-10
+
+- Point the gem homepage to the introductory blog post, keeping source code
+  and changelog links on GitHub.
+
 ## [0.2.1] — 2026-11-02
 
 - `index_now announce` no longer needs ActiveSupport to find the key file;

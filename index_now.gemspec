@@ -8,11 +8,12 @@ Gem::Specification.new do |spec|
   spec.description = "Reads the site's own sitemap, announces every URL whose lastmod moved since it was " \
                      "last announced to api.indexnow.org, and records what it sent so nothing is announced twice. " \
                      "A Rails engine for apps, an index_now command for static sites."
-  spec.homepage    = "https://github.com/tonic20/index_now"
+  spec.homepage    = "https://www.kopylov.net/blog/index-now-telling-search-engines-what-changed.html"
   spec.license     = "MIT"
 
-  spec.metadata["source_code_uri"] = spec.homepage
-  spec.metadata["changelog_uri"]   = "#{spec.homepage}/blob/main/CHANGELOG.md"
+  spec.metadata["homepage_uri"]    = spec.homepage
+  spec.metadata["source_code_uri"] = "https://github.com/tonic20/index_now"
+  spec.metadata["changelog_uri"]   = "https://github.com/tonic20/index_now/blob/main/CHANGELOG.md"
 
   spec.required_ruby_version = ">= 3.3"
 
